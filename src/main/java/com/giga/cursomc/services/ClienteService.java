@@ -15,11 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 import com.giga.cursomc.domain.Cidade;
 import com.giga.cursomc.domain.Cliente;
 import com.giga.cursomc.domain.Endereco;
+import com.giga.cursomc.domain.enums.Perfil;
 import com.giga.cursomc.domain.enums.TipoCliente;
 import com.giga.cursomc.dto.ClienteDTO;
 import com.giga.cursomc.dto.ClienteNewDTO;
 import com.giga.cursomc.respositories.ClienteRepository;
 import com.giga.cursomc.respositories.EnderecoRepository;
+import com.giga.cursomc.security.UserSS;
+import com.giga.cursomc.services.exceptions.AuthorizationException;
 import com.giga.cursomc.services.exceptions.DataIntegrityException;
 import com.giga.cursomc.services.exceptions.ObjectNotFoundException;
 
@@ -36,6 +39,10 @@ public class ClienteService {
 	private EnderecoRepository enderecoRepository;
 	
 	public Cliente find(Integer id) {
+		UserSS user = UserService.authenticated();
+		if(user == null || !user.hasRole(Perfil.ADMIN) && !id.equals(user.getId()))	{
+			throw new AuthorizationException("Acesso negado! Usuário não possui permissão para acessar dados de outro usuário.");
+		}
 		Optional<Cliente> obj = repo.findById(id);
 		return obj.orElseThrow(() -> new ObjectNotFoundException(
 		 "Objeto não encontrado! Id: " + id + ", Tipo: " + Cliente.class.getName()));
